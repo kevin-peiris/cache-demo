@@ -79,49 +79,37 @@ public class ConcurrentLRUCache<K, V> {
      * If cache is full, evicts the least recently used entry.
      */
     public void put(K key, V value) {
-        if (key == null) {
-            throw new NullPointerException("Key cannot be null");
-        }
-        if (value == null) {
-            throw new NullPointerException("Value cannot be null");
-        }
+    if (key == null) throw new NullPointerException("Key cannot be null");
+    if (value == null) throw new NullPointerException("Value cannot be null");
 
-        // Check if key already exists
-        Node<K, V> existing = map.get(key);
-        if (existing != null) {
-            // Update existing entry
-            existing.value = value;
-            moveToHead(existing);
+    listLock.lock();
+    try {
+        Node<K, V> node = map.get(key);
+        if (node != null) {
+            // Update value and move to head
+            node.value = value;
+            removeNode(node);
+            addToHead(node);
             return;
         }
 
-        // Try to insert new node
+        // Insert new node
         Node<K, V> newNode = new Node<>(key, value);
-        Node<K, V> raced = map.putIfAbsent(key, newNode);
-        
-        if (raced != null) {
-            // Another thread inserted this key first, update that one
-            raced.value = value;
-            moveToHead(raced);
-            return;
-        }
+        map.put(key, newNode);
+        addToHead(newNode);
 
-        // We won the race, add to list and handle eviction if needed
-        listLock.lock();
-        try {
-            addToHead(newNode);
-            
-            // Check if we need to evict
-            if (map.size() > capacity) {
-                Node<K, V> lru = removeTail();
-                if (lru != null && lru.key != null) {
-                    map.remove(lru.key, lru);
-                }
+        // Evict LRU until we are within capacity
+        while (map.size() > capacity) {
+            Node<K, V> lru = removeTail();
+            if (lru != null && lru.key != null) {
+                map.remove(lru.key);
             }
-        } finally {
-            listLock.unlock();
         }
+    } finally {
+        listLock.unlock();
     }
+}
+
 
     /**
      * Returns current number of entries in cache.
