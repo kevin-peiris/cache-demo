@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.*;
  * 3. Thread safety under high contention
  * 4. Performance benchmarks
  * 
- * @author [Your Name]
+ * @author Kevin Peiris
  */
 public class ConcurrentLRUCacheTest {
 

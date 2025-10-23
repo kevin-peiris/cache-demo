@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * - The linked list lets us track what was used recently in O(1) time
  * - Only the list structure needs a lock, not the whole cache
  * 
- * @author [Your Name]
+ * @author Kevin Peiris
  * @param <K> key type
  * @param <V> value type
  */
